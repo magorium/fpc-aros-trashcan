@@ -8,7 +8,7 @@ program PString;
 {$MODE OBJFPC}{$H+}
 
 Uses
-  NewArgs, NewArgs.Utils, PString.Utils;
+  {$IFDEF HASAMIGA}AmigaDos,{$ENDIF} NewArgs, NewArgs.Utils, PString.Utils;
 
 
 procedure PrintHelp;
@@ -66,7 +66,7 @@ end;
    function GetCommandLine : PChar; stdcall; external 'kernel32' name 'GetCommandLineA';
 {$ENDIF}
 
-
+{$IFDEF WINDOWS}
 Function GetSystemCommandLine: AnsiString;
 var
   n: integer;
@@ -78,7 +78,17 @@ begin
   Delete(Retval, 1, n);
   GetSystemCommandLine := RetVal;
 end;
+{$ENDIF}
 
+{$IFDEF HASAMIGA}
+Function GetSystemCommandLine: AnsiString;
+var
+  Args   : PChar;
+begin
+  Args := GetArgStr; 
+  GetSystemCommandLine := Args;
+end;
+{$ENDIF}
 
 Const
   Templates : Array[0..1] of string =
