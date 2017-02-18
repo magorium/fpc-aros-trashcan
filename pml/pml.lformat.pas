@@ -41,6 +41,29 @@ unit pml.lformat;
   entry.
 *)
 
+
+interface
+
+Type
+  TLFormatParameter = record
+    fmtChar  : AnsiChar;
+    fmtValue : AnsiString;
+  end;
+
+  TLFormatParameters = array of TLFormatParameter;
+
+  function LFormat(LFmt: AnsiString; Parameters: TLFormatParameters): AnsiString;
+
+
+implementation
+
+uses
+  StrUtils, pml.lformat.utils;
+
+{$DEFINE ENABLE_LFMT_ESCAPE}
+{$DEFINE ENABLE_LFMT_MODIFIERS}
+
+
 (*
         Additionally, the following modifiers, each optional, can be used,
         in this order, following the % character:
@@ -82,107 +105,37 @@ unit pml.lformat;
         1> 
 *)
 
-interface
 
-type
-  TLFormatParameter = record
-    fmtChar  : AnsiChar;
-    fmtValue : AnsiString;
-  end;
-
-  TLFormatParameters = array of TLFormatParameter;
-
-  function LFormat(LFmt: AnsiString; Parameters: TLFormatParameters): AnsiString;
-
-
-implementation
-
-uses
-  SysUtils, StrUtils;
-
-{$DEFINE ENABLE_LFMT_ESCAPE}
-{$DEFINE ENABLE_LFMT_MODIFIERS}
-
-
-// shameful plug of PrintLFormat() from List command in AROS source-tree
+// shameless plug from AROS source-tree rewritten in Pascal with some small 
+// modifications to accomodate Pascal
 function LFormat(LFmt: AnsiString; Parameters: TLFormatParameters): AnsiString;
 type
   TModifierType  = (mtJust, mtMax);
 var
-  ModifierString : Array[0..255] of Char;
-  Modifiers      : Set of TModifierType;
+  ModifierString : Array[TModifierType] of AnsiString;
+  Modifier       : TModifierType;
   i              : LongInt;
   Ch             : Char;
   AttributeValue : AnsiString;
   Justification  : LongInt;
   maxlen         : LongInt;
-var
-  bufindex       : integer;
-  dot            : integer;
-  tmp            : AnsiString;
 
   function FindAttributeValue(Attribute: Char; var Value: AnsiString): boolean; inline;
   var
-    ParameterIndex: integer;
+    p: integer;
   begin
     FindAttributeValue := false;
     Value  := '';
-    for ParameterIndex := Low(Parameters) to High(Parameters) do
+    for p := Low(Parameters) to High(Parameters) do
     begin
-      if (Parameters[ParameterIndex].fmtChar = Attribute) then
+      if (Parameters[p].fmtChar = Attribute) then
       begin
-        Value := Parameters[ParameterIndex].fmtValue;
+        Value := Parameters[p].fmtValue;
         FindAttributeValue := true;
         Break;
       end;
     end;
   end;
-
-  procedure GetModifiers; inline;
-  var
-    tmp : AnsiString;
-    j,m : AnsiString;
-  begin
-    Modifiers := [];
-
-    tmp := ModifierString;
-    RemoveLeadingChars(tmp, ['%']);    
-
-    if (Length(tmp) > 0) then
-    begin
-      j := Copy2SymbDel(tmp, '.');
-      if (Length(J) > 0) then
-      begin
-        if TryStrToInt(J, Justification) 
-        then include(modifiers, mtJust);
-      end
-      else
-      begin
-        exclude(modifiers, mtJust);
-      end;
-    end;
-
-    if (Length(tmp) > 0) then
-    begin
-      if pos('.', tmp) = 1 then RemoveLeadingChars(tmp, ['%']);
-    end;
-
-    if (Length(tmp) > 0) then
-    begin
-      m := tmp;
-
-      if (Length(m) > 0) then
-      begin
-        if TryStrToInt(m, maxlen) 
-        then include(modifiers, mtMax);
-      end
-      else
-      begin
-        exclude(modifiers, mtMax);
-      end;
-    end;
-  end;
-
 
 begin
   LFormat := '';
@@ -199,44 +152,39 @@ begin
 
       {$IFDEF ENABLE_LFMT_MODIFIERS}
       // Try for modifiers
-      bufindex := 0;
-      dot      := 0;
-      FillChar(ModifierString, SizeOf(ModifierString), #0);
-      ModifierString[bufindex] := '%';
-      inc(bufindex);
+
+      ModifierString[mtJust] := '';
+      ModifierString[mtMax]  := '';
+      Modifier := mtJust;
 
       while (i <= Length(LFmt)) do
       begin
-        Ch := LFmt[i]; 
+        Ch := LFmt[i];
         inc(i);
         
         if (Ch = '-') then
         begin
-          bufindex := 1;
-          dot      := 0;
+          ModifierString[mtJust] := '';
+          ModifierString[mtMax]  := '';
+          Modifier := mtJust;
         end
         else if (Ch = '.') then
         begin
-          if (dot <> 0) then
-          begin
-            bufindex := dot;
-          end
-          else
-          begin
-            dot := bufIndex;
-          end;
+          ModifierString[mtMax]  := '';
+          Modifier := mtMax;
+
+          continue;  // skip copying dot character itself
         end
         else if not(Ch in ['0'..'9']) then
         begin
-          // Actual conversion from modifierstring to actual values and
-          // modifier detection done in getmodifier routine
+          // Actual conversion from modifierstring to actual values done below
           break;
         end;
-        // Always add any other char
-        if (bufindex < 255) then
+        // Always add any other char as long as within 255 limit
+        // should probably be replaced with a reasonable amount of characters
+        if Length(ModifierString[Modifier]) < 255 then
         begin
-          ModifierString[bufindex] := Ch;
-          inc(bufIndex);
+          ModifierString[Modifier] := ModifierString[Modifier] + Ch;
         end;
       end;
       {$ENDIF}
@@ -244,18 +192,25 @@ begin
       // interpret arguments
       if FindAttributeValue(Ch, AttributeValue) then
       begin
-        tmp := ModifierString;
-        
-        if (Length(tmp) > 1) then
+        // if maxlen provided 
+        if (Length(ModifierString[mtMax]) > 0) then
         begin
-          GetModifiers;
-          // if maxlen provided then apply
-          if (mtMax in modifiers) then 
+          // apply maxlen if valid otherwise do nothing/raise error ?
+          if TryStrToInt(ModifierString[mtMax], MaxLen) then
           begin
             AttributeValue := LeftStr(AttributeValue, maxLen);
+          end
+          else
+          begin
+            // Raise error and exit ?
           end;
-          // if justification provided ten apply
-          if (mtJust in modifiers) then
+        end;
+
+        // check for justification
+        if (Length(ModifierString[mtJust]) > 0) then
+        begin
+          // apply justification if valid otherwise do nothing/raise error ?
+          if TryStrToInt(ModifierString[mtJust], Justification) then
           begin
             if (justification < 0) then 
             begin                           // pad to right (left justify)
@@ -268,21 +223,27 @@ begin
             end
             else                            // justification = 0
             begin
-              // we can actually skip this line...
+              // we can actually skip this one line...
               AttributeValue := AttributeValue;
             end;
+          end
+          else
+          begin
+            // Raise error and exit ?
           end;
-          LFormat := LFormat + AttributeValue;
-        end
-        else
-          LFormat := LFormat + AttributeValue;
+        end;
+
+        LFormat := LFormat + AttributeValue;
       end
-      else
+      else 
+        // no corresponding parameter attribute could be found, simply add 
+        // last character (or should we add percent sign first as well ??
+        // or perhaps even raise an error ?
       begin
         LFormat := LFormat + Ch;
       end;
-    end
-    else
+    end // current char is not % escape character
+    else 
     {$ENDIF}
       LFormat := LFormat + Ch;
   end;  // while
