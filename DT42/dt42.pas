@@ -11,20 +11,20 @@ program dt42;
   }
 
   {
-    Conversion to Pascal done my Magorium, feb 2017
+    Conversion to Pascal done by Magorium, feb 2017
 
     Perhaps not so notable changes:
-    - Accomodate for enumerators
-    - Note has become a char instead cint
+    - Accommodate for enumerators
+    - Note has become a char instead of cint
     - As a result of the above, there is no <0 check possible. use char #255
     - Where possible cint's where turned into boolean's 
       (i'm sure i forgot some).
     - Some workarounds that might be percieved as being wierd
     - snprintf's replaced with WriteStr's.
-      As a consequence the buffer needs to be indexed with one when being 
+      As a consequence, the buffer needs to be indexed with one when being 
       supplied to other routines and the buffer always needs to be terminated 
       with #0 as the original c-code expects PChars all over the place.
-    - File I/O got a overhaul to Pascal. Still somewhat error-prione and 
+    - File I/O got a overhaul to Pascal. Still somewhat error-prone and 
       incomplete. It's suffice for now.
 
     ToDo:
