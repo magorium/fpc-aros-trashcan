@@ -18,13 +18,13 @@ const
 var
   errno : cint;
 
-  function  calloc(num: size_t; size: size_t): pointer; inline;
-  function  malloc(size: SizeInt): pointer; inline;
+  function  calloc(num: csize_t; size: csize_t): pointer; inline;
+  function  malloc(size: csize_t): pointer; inline;
   function  memcpy(destination: pvoid; const source: pvoid; num: csize_t): pvoid; inline;
   function  memmove(destination: pvoid; const source: pvoid; num: csize_t): pvoid; inline;
   function  realloc(ptr: pointer; size: csize_t): pointer; inline;
   procedure free(p: pointer); inline;
-  function  memset(ptr: pvoid; value: byte; num: size_t): pvoid; inline;
+  function  memset(ptr: pvoid; value: byte; num: csize_t): pvoid; inline;
 
   function  strcat(destination: PChar; const source: PChar): PChar; inline;
   function  strchr(str: PChar; character: Char): PChar; inline;
@@ -32,7 +32,7 @@ var
   function  strcpy(destination: PChar; const source: PChar): PChar; inline;
   function  strdup(const s: PChar): PChar;
   function  strncmp(const str1: PChar; const str2: PChar; num: csize_t): integer; inline;
-  function  strncpy(dest: PChar; src: PChar; n: size_t): PChar;
+  function  strncpy(dest: PChar; src: PChar; n: csize_t): PChar;
 
   // dummy
   function  strerror(errnum: cint): String; inline;
@@ -84,13 +84,13 @@ begin
 end;
 
 
-function  calloc(num: size_t; size: size_t): pointer; inline;
+function  calloc(num: csize_t; size: csize_t): pointer; inline;
 begin
   calloc := System.AllocMem(num * size);
 end;
 
 
-function  malloc(size: SizeInt): pointer; inline;
+function  malloc(size: csize_t): pointer; inline;
 begin
   malloc := System.GetMem(size);
   {$IFDEF DEBUG_CHELPERS}
@@ -137,7 +137,7 @@ begin
 end;
 
 
-function  memset(ptr: pvoid; value: byte; num: size_t): pvoid; inline;
+function  memset(ptr: pvoid; value: byte; num: csize_t): pvoid; inline;
 begin
   FillChar(ptr^, num, value);
   memset := ptr;
@@ -197,7 +197,7 @@ begin
 end;
 
 
-function  strncpy(dest: PChar; src: PChar; n: size_t): PChar;
+function  strncpy(dest: PChar; src: PChar; n: csize_t): PChar;
 var
   ptr : PChar;
 begin
