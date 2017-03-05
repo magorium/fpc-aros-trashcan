@@ -1207,161 +1207,162 @@ begin
   if (SDL_Init(0) < 0)
     then exit(-1);
 
-  AddExitProc(@Quit); // atexit(SDL_Quit);
-  
+// ALB: if we do not use halt, we dont need this hack -> try finally will do it
+// AddExitProc(@Quit); // atexit(SDL_Quit);
 //
 //  signal(SIGTERM, breakhandler);
 //  signal(SIGINT, breakhandler);
 //
-
-  if (dbuffer < 0) then dbuffer := abuffer * 3;
-
-  osc_left   := calloc(dbuffer, sizeof(Sint32));
-  osc_right  := calloc(dbuffer, sizeof(Sint32));
-  playposbuf := calloc(dbuffer, sizeof(cshort));
-
-  if ( not assigned(osc_left) or not assigned(osc_right) or not assigned(playposbuf) ) then
-  begin
-    WriteLn(stderr, 'Couldn''t allocate delay buffers!');
-    SDL_Quit();
-    exit(-1);
-  end;
-
-  screen := SDL_SetVideoMode(640, 480, 0, sdlflags);
-  if not assigned(screen) then
-  begin
-    WriteLn(stderr, 'Couldn''t open display!');
-    SDL_Quit();
-    exit(-1);
-  end;
-  SDL_WM_SetCaption('DT-42 DrumToy', 'DrumToy');
-
-  if not gui_open(screen) then
-  begin
-    WriteLn(stderr, 'Couldn''t start GUI!');
-    SDL_Quit();
-    exit(-1);
-  end;
-  switch_page(GUI_PAGE_MAIN);
-
-  if (sm_open(abuffer) < 0) then
-  begin
-    WriteLn(stderr, 'Couldn''t start mixer!');
-    SDL_Quit();
-    exit(-1);
-  end;
-
-  sseq_open();
-  sm_set_audio_cb(@audio_process);
-
-  //* Try to load song if specified */
-  res := -1;
-
-  if assigned(songfilename) then
-  begin
-    res := load_song(songfilename);
-    if ( must_exist and (res < 0) ) then
+  try
+    if (dbuffer < 0) then dbuffer := abuffer * 3;
+  
+    osc_left   := calloc(dbuffer, sizeof(Sint32));
+    osc_right  := calloc(dbuffer, sizeof(Sint32));
+    playposbuf := calloc(dbuffer, sizeof(cshort));
+  
+    if ( not assigned(osc_left) or not assigned(osc_right) or not assigned(playposbuf) ) then
     begin
-      sm_close();
+      WriteLn(stderr, 'Couldn''t allocate delay buffers!');
       SDL_Quit();
-      WriteLn(stderr, 'Giving up! (Use the -n option to create a new song by name.)');
       exit(-1);
     end;
-    if (res >= 0) then
+  
+    screen := SDL_SetVideoMode(640, 480, 0, sdlflags);
+    if not assigned(screen) then
     begin
-      playing := true;
-      res := 0;
-    end;
-  end;
-
-  //* If no song was loaded, load default.dt42 instead */
-  if (res < 0) then
-  begin
-    if (load_song('default.dt42') < 0) then
-    begin
-      sm_close();
+      WriteLn(stderr, 'Couldn''t open display!');
       SDL_Quit();
-      WriteLn(stderr, 'Couldn''t load default song!');
       exit(-1);
     end;
-    gui_message('Welcome to DT-42 ' + VERSION + '.  ('#&005'H for '#&005'Help!)', -1);
-  end;
-
-  gui_status(playing, editing, looping);
-
-  sseq_pause(not playing);
-
-  last_tick := SDL_GetTicks();
-
-  while not(die) do
-  begin
-    tick      := SDL_GetTicks();
-    dt        := tick - last_tick;
-    last_tick := tick;
-
-    //* Handle GUI events */
-    while (SDL_PollEvent(@ev) <> 0) do
+    SDL_WM_SetCaption('DT-42 DrumToy', 'DrumToy');
+  
+    if not gui_open(screen) then
     begin
-      case (ev.type_) of
-        SDL_KEYDOWN:
-        begin
-          case (dialog_mode) of
-            DM_NORMAL       : handle_key(@ev);
-            DM_ASK_EXIT     : handle_key_ask_exit(@ev);
-            DM_ASK_NEW      : handle_key_ask_new(@ev);
-            DM_ASK_LOADNAME,
-            DM_ASK_SAVENAME : handle_key_ask_filename(@ev);
-          end; // case
-        end;
-        SDL_QUITEV:
-        begin
-          ask_exit();
-        end;
-      end;
+      WriteLn(stderr, 'Couldn''t start GUI!');
+      SDL_Quit();
+      exit(-1);
     end;
-
-    {
-    * Update the calculated current play position.
-    *   We know that the mixer generates 44100 samples/s.
-    *   Thus, plotpos should advance 44100 samples/s too.
-    *   osc_process() will resync plotpos every time it
-    *   runs, so it doesn't drift off over time.
-    }
-    plotpos := plotpos + trunc(44100 * dt / 1000);
-
-    //* Figure out current playback song position */
-    playpos := playposbuf[plotpos mod dbuffer];
-
-    //* Update the screen */
-    case (page) of
-      GUI_PAGE_MAIN: update_main(screen, dt);
-      GUI_PAGE_LOG,
-      GUI_PAGE_HELP1,
-      GUI_PAGE_HELP2,
-      GUI_PAGE_HELP3,
-      GUI_PAGE_HELP4:
+    switch_page(GUI_PAGE_MAIN);
+  
+    if (sm_open(abuffer) < 0) then
+    begin
+      WriteLn(stderr, 'Couldn''t start mixer!');
+      SDL_Quit();
+      exit(-1);
+    end;
+  
+    sseq_open();
+    sm_set_audio_cb(@audio_process);
+  
+    //* Try to load song if specified */
+    res := -1;
+  
+    if assigned(songfilename) then
+    begin
+      res := load_song(songfilename);
+      if ( must_exist and (res < 0) ) then
       begin
-        { do nothing }
+        sm_close();
+        SDL_Quit();
+        WriteLn(stderr, 'Giving up! (Use the -n option to create a new song by name.)');
+        exit(-1);
+      end;
+      if (res >= 0) then
+      begin
+        playing := true;
+        res := 0;
       end;
     end;
-
-    last_playpos := playpos;
-
-    //* Refresh dirty areas of the screen */
-    gui_refresh();
-
-    //* Try to look less like a CPU hog */
-    SDL_Delay(10);
+  
+    //* If no song was loaded, load default.dt42 instead */
+    if (res < 0) then
+    begin
+      if (load_song('default.dt42') < 0) then
+      begin
+        sm_close();
+        SDL_Quit();
+        WriteLn(stderr, 'Couldn''t load default song!');
+        exit(-1);
+      end;
+      gui_message('Welcome to DT-42 ' + VERSION + '.  ('#&005'H for '#&005'Help!)', -1);
+    end;
+  
+    gui_status(playing, editing, looping);
+  
+    sseq_pause(not playing);
+  
+    last_tick := SDL_GetTicks();
+  
+    while not(die) do
+    begin
+      tick      := SDL_GetTicks();
+      dt        := tick - last_tick;
+      last_tick := tick;
+  
+      //* Handle GUI events */
+      while (SDL_PollEvent(@ev) <> 0) do
+      begin
+        case (ev.type_) of
+          SDL_KEYDOWN:
+          begin
+            case (dialog_mode) of
+              DM_NORMAL       : handle_key(@ev);
+              DM_ASK_EXIT     : handle_key_ask_exit(@ev);
+              DM_ASK_NEW      : handle_key_ask_new(@ev);
+              DM_ASK_LOADNAME,
+              DM_ASK_SAVENAME : handle_key_ask_filename(@ev);
+            end; // case
+          end;
+          SDL_QUITEV:
+          begin
+            ask_exit();
+          end;
+        end;
+      end;
+  
+      {
+      * Update the calculated current play position.
+      *   We know that the mixer generates 44100 samples/s.
+      *   Thus, plotpos should advance 44100 samples/s too.
+      *   osc_process() will resync plotpos every time it
+      *   runs, so it doesn't drift off over time.
+      }
+      plotpos := plotpos + trunc(44100 * dt / 1000);
+  
+      //* Figure out current playback song position */
+      playpos := playposbuf[plotpos mod dbuffer];
+  
+      //* Update the screen */
+      case (page) of
+        GUI_PAGE_MAIN: update_main(screen, dt);
+        GUI_PAGE_LOG,
+        GUI_PAGE_HELP1,
+        GUI_PAGE_HELP2,
+        GUI_PAGE_HELP3,
+        GUI_PAGE_HELP4:
+        begin
+          { do nothing }
+        end;
+      end;
+  
+      last_playpos := playpos;
+  
+      //* Refresh dirty areas of the screen */
+      gui_refresh();
+  
+      //* Try to look less like a CPU hog */
+      SDL_Delay(10);
+    end;
+  finally
+    sm_close();
+    sseq_close();
+    gui_close();
+    SDL_Quit();
+    free(osc_left);
+    free(osc_right);
+    free(playposbuf);
+    free(songfilename);
   end;
-
-  sm_close();
-  sseq_close();
-  gui_close();
-  SDL_Quit();
-  free(osc_left);
-  free(osc_right);
-  free(playposbuf);
-  free(songfilename);
   exit(0);
 end;
 
