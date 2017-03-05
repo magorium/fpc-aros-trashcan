@@ -93,9 +93,6 @@ end;
 function  malloc(size: csize_t): pointer; inline;
 begin
   malloc := System.GetMem(size);
-  {$IFDEF DEBUG_CHELPERS}
-  DebugLn('< malloc(%d) = $%p >', [size, malloc]);
-  {$ENDIF}
 end;
 
 
@@ -123,16 +120,7 @@ procedure free(p: pointer); inline;
 begin
   if (p <> nil) then
   begin
-    {$IFDEF DEBUG_CHELPER}  
-    DebugLn('< free($%p) >', [p]);
-    {$ENDIF}
     System.FreeMem(p);
-  end
-  else 
-  begin
-    {$IFDEF DEBUG_CHELPER}
-    DebugLn('< free($00000000) >');
-    {$ENDIF}
   end;
 end;
 
