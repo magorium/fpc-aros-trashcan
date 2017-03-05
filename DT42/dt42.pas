@@ -863,6 +863,13 @@ begin
     end;
     SDLK_o:
     begin
+      // ALB: Stop playing when load a new one -> (or it will crash)
+      if playing then
+      begin
+        playing := False;
+        sseq_pause(not playing);
+        gui_status(playing, editing, looping);
+      end;
       ask_loadname(songfilename);
     end;
     SDLK_s:
