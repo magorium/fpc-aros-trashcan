@@ -35,7 +35,12 @@ program dt42;
   }
 
 uses
-  {$IFDEF TRACE}heaptrc,{$ENDIF} ctypes, chelpers, smixer, sseq, gui, dtversion, SDL;
+  {$IFDEF TRACE}heaptrc,{$ENDIF} ctypes, chelpers, 
+  smixer, sseq, gui, dtversion, 
+  {$IFDEF AROS}
+  arosc_static_link,
+  {$ENDIF}
+  SDL;
 
 
 {*-------------------------------------------------------------------
@@ -1183,7 +1188,7 @@ begin
 end;
 
 
-function main(argc: cint; argv: PPChar): cint;
+function DT42_main(argc: cint; argv: PPChar): cint;
 var
   screen    : PSDL_Surface;
   res       : cint;
@@ -1361,6 +1366,16 @@ begin
 end;
 
 
+procedure DT42_Startup;
 begin
-  ExitCode := Main(argc, argv);
+  ExitCode := DT42_main(argc, argv);
+end;
+
+
+begin
+  {$IFDEF AROS}
+  arosc_static_link.AROSC_Init(@DT42_Startup);
+  {$ELSE}
+  DT42_Startup;
+  {$ENDIF}
 end.
