@@ -1,4 +1,4 @@
-program test1;
+program test_args1;
 
 {$H+}
 
