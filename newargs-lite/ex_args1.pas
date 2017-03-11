@@ -1,4 +1,4 @@
-program example1;
+program ex_args1;
 
 uses
   NewArgs, StrUtils;
