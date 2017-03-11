@@ -107,7 +107,7 @@ uses
 
 
 // shameless plug from AROS source-tree rewritten in Pascal with some small 
-// modifications to accomodate Pascal
+// modifications to accommodate Pascal
 function LFormat(LFmt: AnsiString; Parameters: TLFormatParameters): AnsiString;
 type
   TModifierType  = (mtJust, mtMax);
