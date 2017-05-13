@@ -1,0 +1,19 @@
+icon2iff.i386-aros Icon_old_4    Icon_old_4.32bit.iff   VERBOSE DUMP                    > Icon_old_4.32bit.iff.log
+icon2iff.i386-aros Icon_old_4    Icon_old_4.24bit.iff   VERBOSE DUMP            NOALPHA > Icon_old_4.24bit.iff.log
+icon2iff.i386-aros Icon_old_4    Icon_old_4.32bit.png   VERBOSE DUMP FORMAT=PNG         > Icon_old_4.32bit.png.log
+icon2iff.i386-aros Icon_old_4    Icon_old_4.24bit.png   VERBOSE DUMP FORMAT=PNG NOALPHA > Icon_old_4.24bit.png.log
+
+icon2iff.i386-aros Icon_old_mwb  Icon_old_mwb.32bit.iff VERBOSE DUMP                    > Icon_old_mwb.32bit.iff.log
+icon2iff.i386-aros Icon_old_mwb  Icon_old_mwb.24bit.iff VERBOSE DUMP            NOALPHA > Icon_old_mwb.24bit.iff.log
+icon2iff.i386-aros Icon_old_mwb  Icon_old_mwb.32bit.png VERBOSE DUMP FORMAT=PNG         > Icon_old_mwb.32bit.png.log
+icon2iff.i386-aros Icon_old_mwb  Icon_old_mwb.24bit.png VERBOSE DUMP FORMAT=PNG NOALPHA > Icon_old_mwb.24bit.png.log
+
+icon2iff.i386-aros Icon_new      Icon_new.32bit.iff     VERBOSE DUMP                    > Icon_new.32bit.iff.log
+icon2iff.i386-aros Icon_new      Icon_new.24bit.iff     VERBOSE DUMP NOALPHA            > Icon_new.24bit.iff.log
+icon2iff.i386-aros Icon_new      Icon_new.32bit.png     VERBOSE DUMP FORMAT=PNG         > Icon_new.32bit.png.log
+icon2iff.i386-aros Icon_new      Icon_new.24bit.png     VERBOSE DUMP FORMAT=PNG NOALPHA > Icon_new.24bit.png.log
+
+icon2iff.i386-aros Icon_power    Icon_power.32bit.iff   VERBOSE DUMP                    > Icon_power.32bit.iff.log
+icon2iff.i386-aros Icon_power    Icon_power.24bit.iff   VERBOSE DUMP NOALPHA            > Icon_power.24bit.iff.log
+icon2iff.i386-aros Icon_power    Icon_power.32bit.png   VERBOSE DUMP FORMAT=PNG         > Icon_power.32bit.png.log
+icon2iff.i386-aros Icon_power    Icon_power.24bit.png   VERBOSE DUMP FORMAT=PNG NOALPHA > Icon_power.24bit.png.log
