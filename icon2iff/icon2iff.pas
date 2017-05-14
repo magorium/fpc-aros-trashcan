@@ -508,7 +508,7 @@ begin
   // write more chunks here, if wanted
   if odd(chunklen) then FS.WriteByte(0);
 
-  Verbose('Written %d bytes into body, should be ', [alw * Height * Depth div 8]);
+  Verbose('Written %d bytes into body, should be %d', [j, alw * Height * Depth div 8]);
 
   FS.Free;
 end;
