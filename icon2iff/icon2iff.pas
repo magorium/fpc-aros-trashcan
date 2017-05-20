@@ -3,7 +3,7 @@ program icon2iff;
 {$MODE OBJFPC}{$H+}
 
 uses
-  Classes, fpImage, FPWritePNG, SysUtils, StrUtils, 
+  Classes, fpImage, FPWritePNG, SysUtils, StrUtils, Dos,
   Exec, AmigaDOS, WorkBench, Icon, Intuition, icon_native;
 
 (*
@@ -39,18 +39,20 @@ uses
 *)
 
 const
-  VERSION_STRING : PChar = #0'$VER: icon2iff 0.1 (13.05.2017) (c)2017 magorium';
+  VERSION_STRING : PChar = #0'$VER: icon2iff 0.2 (17.05.2017) (c)2017 magorium';
 const
   //  ARG_TEMPLATE : PChar = 'SOURCE/A,DEST/A,NOALPHA/S,ALT=ALTERNATE/S,FORMAT=OUTPUTFORMAT/K';
-  ARG_TEMPLATE : PChar = 'SOURCE/A,DEST/A,NOALPHA/S,ALT=ALTERNATE/S,FORMAT=OUTPUTFORMAT/K,DUMP/S,VERBOSE/S';
+  COMMON_TEMPLATE       = 'SOURCE/A,DEST/A,NOALPHA/S,ALT=ALTERNATE/S,FORMAT=OUTPUTFORMAT/K,VERBOSE/S';
+  ARG_TEMPLATE1 : PChar = COMMON_TEMPLATE;
+  ARG_TEMPLATE2 : PChar = COMMON_TEMPLATE + ',DUMP/S';
 
   ARG_SOURCE  = 0;
   ARG_DEST    = 1;  
   ARG_NOALPHA = 2;
   ARG_ALT     = 3;
   ARG_FORMAT  = 4;
-  ARG_DUMP    = 5;
-  ARG_VERBOSE = 6;
+  ARG_VERBOSE = 5;
+  ARG_DUMP    = 6;
   NUM_ARGS    = 7;
 
 const
@@ -62,9 +64,10 @@ var
   Opt_NoAlpha        : boolean;
   Opt_Alternate      : Boolean;
   Opt_Format         : String;
-  Opt_Dump           : boolean;
   Opt_Verbose        : boolean;
+  Opt_Dump           : boolean;
 
+  Env_DebugMode      : boolean = false;
 
 type
   TNativeImageStorage = 
@@ -145,7 +148,7 @@ const
     (r: $d7; g: $75; b: $27)     //* 15 - Orange */
   );
 
-{$IF DEFINED(AROS) and (FPC_FULLVERSION < 030101)}
+{$IF DEFINED(AROS) and (FPC_FULLVERSION < 030102)}
 function ReadArgs(const Template: STRPTR; Array_: PIPTR; RdArgs: PRDArgs): PRDArgs; syscall AOS_DOSBase 133;
 {$ENDIF}
 
@@ -802,11 +805,16 @@ var
   MyArgs    : PRDArgs;
   Args      : Array[0..Pred(NUM_ARGS)] of LongWord;
   i         : integer;
+  Active_Template : PChar;
 begin
   Result := False;
   for i := Low(Args) To High(Args) do Args[i] := 0;
 
-  myargs := ReadArgs(ARG_TEMPLATE, @args[0], nil);
+  if Env_DebugMode
+  then Active_Template := ARG_TEMPLATE2
+  else Active_Template := ARG_TEMPLATE1;
+
+  myargs := ReadArgs(Active_Template, @args[0], nil);
   if ( myargs <> nil ) then
   begin
     Opt_SourceFilename := StrPas(STRPTR(args[ARG_SOURCE]));
@@ -814,9 +822,10 @@ begin
     Opt_NoAlpha        := LONGBOOL(args[ARG_NOALPHA]);
     Opt_Alternate      := LONGBOOL(args[ARG_ALT]);
     Opt_Format         := StrPas(STRPTR(args[ARG_FORMAT]));
-    Opt_Dump           := LONGBOOL(args[ARG_DUMP]);
     Opt_Verbose        := LONGBOOL(args[ARG_VERBOSE]);
-
+    if Env_DebugMode
+    then Opt_Dump      := LONGBOOL(args[ARG_DUMP])
+    else Opt_Dump      := false;
 
     i := AnsiIndexText(Opt_Format, OutputFileTypes);
     if i = -1 
@@ -831,6 +840,8 @@ end;
 
 
 begin
+  Env_DebugMode := (GetEnv(ExtractFileName(ParamStr(0)) + '.debug') <> '');
+
   if GetArguments then
   begin
     Verbose('Processing file');
