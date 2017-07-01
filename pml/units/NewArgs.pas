@@ -448,13 +448,13 @@ end;
   By default, the original AFC class does not support the definition of 
   multiple keywords in a template field.
 
-  Splitting these multiple kwywords up in FStr node is not viable as there 
+  Splitting these multiple keywords up in FStr node is not viable as there 
   would be no way of telling which keywords belong to eachother. Ergo 
   duplication errors will occur.
   
-  The easiest way to impleent is by allowing for multiple keywords using the 
+  The easiest way to implement is by allowing for multiple keywords using the 
   '=' sign, but instead of using a simple comparison in the get_keyword 
-  routine, to implement a specialised compare that retreives the fieldnames
+  routine, to implement a specialised compare that retrieves the fieldnames
   (as is), splitting them up and do a compare for each splitted word.
   
   In FPC this is easy enough by using the wordcount and extractword routines
@@ -522,8 +522,8 @@ end;
 (*
   Search for the given key in the internal constructed argument array.
   If the key is found then delete it from the array but in case of non switches
-  also get the corresponding keyvalue (returned in retKeyValue), which if 
-  existing is also deleted from the argument array.
+  also get the corresponding keyvalue (returned in retKeyValue), which (if 
+  existing) is also deleted from the argument array.
 *)
 {$PUSH}{$NOTES OFF}
 function  nargs_get_keyword(key: AnsiString; is_Switch, is_numeric: boolean; var retKeyValue: AnsiString): integer;
@@ -590,7 +590,7 @@ begin
         // if it's sure that that the keyvalue is not empty then
         if (ThisArg <> '') then
         begin
-          // We get the numeric reppresentation of this arg, which is the 
+          // We get the numeric representation of this arg, which is the 
           // key value for this found key word.
           Val(ThisArg, V, Code);
           if (Code <> 0) then exit(NARGS_ERR_NOT_A_NUMBER);
